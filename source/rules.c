@@ -2,6 +2,10 @@
 
 //--------------------------------------------------------------------------------------------------------------------------
 
+#define ETH_P_STP 0x0026
+
+//--------------------------------------------------------------------------------------------------------------------------
+
 int load_rules(const char* rules_filename, FilterRule* rules)
 {
 	FILE* rules_file = fopen(rules_filename, "r");
@@ -94,7 +98,63 @@ int load_rules(const char* rules_filename, FilterRule* rules)
 
 int apply_rules(unsigned char* buffer, FilterRule* rules, int rules_count)
 {
+	struct ethhdr* eth_header = (struct ethhdr*)buffer;
+	if (ntohs(eth_header->h_proto) == ETH_P_ARP || ntohs(eth_header->h_proto) == ETH_P_STP)
+	{
+		return 1;
+	}
+
+	struct ip* ip_header = (struct ip*)(buffer + sizeof(struct ethhdr));
+	int ip_header_len = ip_header->ip_hl * 4;
+
+	struct tcphdr* tcp_header = NULL;
+	struct udphdr* udp_header = NULL;
+
+	if      (ip_header->ip_p == IPPROTO_TCP)
+	{
+		tcp_header = (struct tcphdr*)(buffer + sizeof(struct ethhdr) + ip_header_len);
+	}
+	else if (ip_header->ip_p == IPPROTO_UDP)
+	{
+		udp_header = (struct udphdr*)(buffer + sizeof(struct ethhdr) + ip_header_len);
+	}
+
+
+	int is_blacklist = rules[rules_count - 1].action;
 	
+	for (int i = 0; i < rules_count; i++)
+	{
+		FilterRule* rule = &rules[i];
+
+		if ((rule->src_ip.s_addr != INADDR_ANY && ip_header->ip_src.s_addr != rule->src_ip.s_addr) ||
+		     (rule->dst_ip.s_addr != INADDR_ANY && ip_header->ip_dst.s_addr != rule->dst_ip.s_addr))
+		{
+			continue;
+		}
+		if (rule->protocol != 0 && rule->protocol != ip_header->ip_p)
+			continue;
+
+		if (ip_header->ip_p == IPPROTO_TCP)
+		{
+			if ((rule->src_port != 0 && ntohs(tcp_header->th_sport) != rule->src_port) ||
+			    (rule->dst_port != 0 && ntohs(tcp_header->th_dport) != rule->dst_port))
+			{
+				continue;
+			}
+		}
+		else if (ip_header->ip_p == IPPROTO_UDP)
+		{
+			if ((rule->src_port != 0 && ntohs(udp_header->uh_sport) != rule->src_port) ||
+			    (rule->dst_port != 0 && ntohs(udp_header->uh_dport) != rule->dst_port))
+			{
+				continue;
+			}
+		}
+
+		return is_blacklist;
+	}
+
+	return !is_blacklist;
 }
 
 
