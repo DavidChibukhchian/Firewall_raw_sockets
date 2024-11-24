@@ -70,12 +70,12 @@ void print_packet_info(const unsigned char* buffer)
 
 	printf("src_ip=%s;  dst_ip=%s;  ", inet_ntoa(ip_header->ip_src), inet_ntoa(ip_header->ip_dst));
 
-	if (ip_header->ip_p == IPPROTO_TCP)
+	if      (ip_header->ip_p == IPPROTO_TCP)
 	{
 		struct tcphdr* tcp_header = (struct tcphdr*)(buffer + sizeof(struct ethhdr) + ip_header_len);
 		printf("protocol=TCP;  ");
 		printf("src_port=%d;  ", ntohs(tcp_header->th_sport));
-		printf("dst_port=%d  ", ntohs(tcp_header->th_dport));
+		printf("dst_port=%d;  ", ntohs(tcp_header->th_dport));
 	}
 	else if (ip_header->ip_p == IPPROTO_UDP)
 	{
@@ -91,6 +91,5 @@ void print_packet_info(const unsigned char* buffer)
 
 	printf("\n\n");
 }
-
 
 //--------------------------------------------------------------------------------------------------------------------------

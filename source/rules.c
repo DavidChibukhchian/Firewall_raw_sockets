@@ -157,5 +157,4 @@ int apply_rules(unsigned char* buffer, FilterRule* rules, int rules_count)
 	return !is_blacklist;
 }
 
-
 //--------------------------------------------------------------------------------------------------------------------------
