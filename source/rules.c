@@ -101,7 +101,7 @@ int apply_rules(unsigned char* buffer, FilterRule* rules, int rules_count)
 	struct ethhdr* eth_header = (struct ethhdr*)buffer;
 	if (ntohs(eth_header->h_proto) == ETH_P_ARP || ntohs(eth_header->h_proto) == ETH_P_STP)
 	{
-		return 1;
+		return 0;
 	}
 
 	struct ip* ip_header = (struct ip*)(buffer + sizeof(struct ethhdr));
@@ -120,8 +120,8 @@ int apply_rules(unsigned char* buffer, FilterRule* rules, int rules_count)
 	}
 
 
-	int is_blacklist = rules[rules_count - 1].action;
-	
+	const int is_blacklist = rules[rules_count - 1].action;
+
 	for (int i = 0; i < rules_count; i++)
 	{
 		FilterRule* rule = &rules[i];

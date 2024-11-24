@@ -4,6 +4,15 @@
 
 //--------------------------------------------------------------------------------------------------------------------------
 
+enum info_mode
+{
+	DO_NOT_SHOW_PACKETS_INFO,
+	SHOW_ALLOWED_PACKETS_INFO,
+	SHOW_BLOCKED_PACKETS_INFO
+};
+
+//--------------------------------------------------------------------------------------------------------------------------
+
 volatile sig_atomic_t stop = 0;
 
 void handler(int sig)
@@ -15,16 +24,29 @@ void handler(int sig)
 
 int main(int argc, char* argv[])
 {
-	if (argc != 4)
+	if ((argc != 4) && (argc != 5))
 	{
 		printf("ERROR: Wrong number of arguments.\n");
-		printf("Run %s <interface1> <interface2> <rules.txt>", argv[0]);
+		printf("Run %s <interface1> <interface2> <rules.txt> [mode]\n\n", argv[0]);
 		return -1;
 	}
 
 	const char* interface1     = argv[1];
 	const char* interface2     = argv[2];
 	const char* rules_filename = argv[3];
+	enum info_mode mode = DO_NOT_SHOW_PACKETS_INFO;
+	if (argc == 5)
+	{
+		if      (strcmp(argv[4], "allowed") == 0)
+		{
+			mode = SHOW_ALLOWED_PACKETS_INFO;
+		}
+		else if (strcmp(argv[4], "blocked") == 0)
+		{
+			mode = SHOW_BLOCKED_PACKETS_INFO;
+		}
+	}
+
 
 	int sockfd1 = create_raw_socket(interface1);
 	int sockfd2 = create_raw_socket(interface2);
@@ -33,38 +55,37 @@ int main(int argc, char* argv[])
 	int rules_count = load_rules(rules_filename, rules);
 	if (rules_count <= 0)
 	{
-		printf("ERROR: Unable to load rules.\n");
+		printf("ERROR: Unable to load rules.\n\n");
 		return -2;
 	}
+
 
 	unsigned char buffer[BUF_SIZE];
 	signal(SIGINT, handler);
 	while (!stop)
 	{
 		int packet_size = receive_packet(sockfd1, buffer);
-		if (packet_size == -1)
-		{
-			printf("ERROR: Failed to receive a packet.\n");
-			printf("Firewall continues working...\n");
-			continue;
-		}
 
 		if (!apply_rules(buffer, rules, rules_count))
 		{
-			int send_size = send_packet(sockfd2, buffer, packet_size);
-			if (send_size == -1)
+			send_packet(sockfd2, buffer, packet_size);
+
+			if (mode == SHOW_ALLOWED_PACKETS_INFO)
 			{
-				printf("ERROR: Failed to send a packet.\n");
-				printf("Firewall continues working...\n");
-				continue;
+				printf("A packet has been allowed. Info: ");
+				print_packet_info(buffer);
 			}
-			printf("A packet has not been blocked.\n");
 		}
 		else
 		{
-			printf("A packet has been blocked.\n");
+			if (mode == SHOW_BLOCKED_PACKETS_INFO)
+			{
+				printf("A packet has been blocked. Info: ");
+				print_packet_info(buffer);
+			}
 		}
 	}
+
 
 	close(sockfd1);
 	close(sockfd2);
