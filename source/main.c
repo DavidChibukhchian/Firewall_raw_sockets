@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
 			continue;
 		}
 
-		if (apply_rules(buffer, rules, rules_count))
+		if (!apply_rules(buffer, rules, rules_count))
 		{
 			int send_size = send_packet(sockfd2, buffer, packet_size);
 			if (send_size == -1)
@@ -58,6 +58,11 @@ int main(int argc, char* argv[])
 				printf("Firewall continues working...\n");
 				continue;
 			}
+			printf("A packet has not been blocked.\n");
+		}
+		else
+		{
+			printf("A packet has been blocked.\n");
 		}
 	}
 
