@@ -4,7 +4,7 @@
 
 Запускайте программу командой
 ```
-./firewall <interface1> <interface2> <rules.txt>
+sudo ./firewall <interface1> <interface2> <rules.txt>
 ```
 
 Чтобы остановить выполнение межсетевого экрана, нажмите ```Ctrl + C```.
