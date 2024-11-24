@@ -1,7 +1,6 @@
 #include <signal.h>
-#include "filter.h"
-#include "rules.h"
 #include "utils.h"
+#include "rules.h"
 
 //--------------------------------------------------------------------------------------------------------------------------
 
@@ -14,24 +13,25 @@ void handler(int sig)
 
 //--------------------------------------------------------------------------------------------------------------------------
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
-	if (argc != 3)
+	if (argc != 4)
 	{
 		printf("ERROR: Wrong number of arguments.\n");
-		printf("Run %s <interface1> <interface2>", argv[0]);
+		printf("Run %s <interface1> <interface2> <rules.txt>", argv[0]);
 		return -1;
 	}
 
-	const char* interface1 = argv[1];
-	const char* interface2 = argv[2];
+	const char* interface1     = argv[1];
+	const char* interface2     = argv[2];
+	const char* rules_filename = argv[3];
 
 	int sockfd1 = create_raw_socket(interface1);
 	int sockfd2 = create_raw_socket(interface2);
 
-	FilterRule* rules;
-	int rules_count = load_rules("rules.txt", &rules);
-	if (rules_count < 0)
+	FilterRule rules[MAX_RULES_COUNT];
+	int rules_count = load_rules(rules_filename, rules);
+	if (rules_count <= 0)
 	{
 		printf("ERROR: Unable to load rules.\n");
 		return -2;
@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
 			continue;
 		}
 
-		if (apply_filter(buffer, rules, rules_count))
+		if (apply_rules(buffer, rules, rules_count))
 		{
 			int send_size = send_packet(sockfd2, buffer, packet_size);
 			if (send_size == -1)
@@ -61,7 +61,6 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	free(rules);
 	close(sockfd1);
 	close(sockfd2);
 

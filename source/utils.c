@@ -17,7 +17,6 @@ int create_raw_socket(const char* interface)
 
 //--------------------------------------------------------------------------------------------------------------------------
 
-
 int receive_packet(int sockfd, unsigned char* buffer)
 {
 	struct sockaddr saddr;
@@ -30,7 +29,6 @@ int receive_packet(int sockfd, unsigned char* buffer)
 
 //--------------------------------------------------------------------------------------------------------------------------
 
-
 int send_packet(int sockfd, unsigned char* buffer, int packet_size)
 {
 	struct sockaddr_ll sa;
@@ -40,16 +38,6 @@ int send_packet(int sockfd, unsigned char* buffer, int packet_size)
 	int send_size = sendto(sockfd, buffer, packet_size, 0, (struct sockaddr*)&sa, sizeof(struct sockaddr_ll));
 
 	return send_size;
-}
-
-//--------------------------------------------------------------------------------------------------------------------------
-
-struct in_addr string_to_ip(const char* ip_string)
-{
-	struct in_addr ip_addr;
-	inet_pton(AF_INET, ip_string, &ip_addr);
-
-	return ip_addr;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------

@@ -3,7 +3,7 @@ TARGET = build/firewall
 CC = gcc
 CFLAGS = -Wall -Iinclude
 
-SRC_files = main.c
+SRC_files = main.c utils.c rules.c
 SRC = $(addprefix source/, $(SRC_files))
 OBJ = $(SRC:source/%.c=build/%.o)
 
