@@ -1,13 +1,7 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include <signal.h>
 #include "filter.h"
 #include "rules.h"
 #include "utils.h"
-
-//--------------------------------------------------------------------------------------------------------------------------
-
-#define BUF_SIZE 65536
 
 //--------------------------------------------------------------------------------------------------------------------------
 
@@ -57,11 +51,12 @@ int main(int argc, char *argv[])
 
 		if (apply_filter(buffer, rules, rules_count))
 		{
-			int err = send_packet(sockfd2, buffer, packet_size);
-			if (err == -1)
+			int send_size = send_packet(sockfd2, buffer, packet_size);
+			if (send_size == -1)
 			{
 				printf("ERROR: Failed to send a packet.\n");
 				printf("Firewall continues working...\n");
+				continue;
 			}
 		}
 	}
