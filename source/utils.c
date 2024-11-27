@@ -6,13 +6,14 @@
 
 //--------------------------------------------------------------------------------------------------------------------------
 
-int create_raw_socket(const char* interface)
+int create_raw_socket(const char* interface, int* index)
 {
 	struct sockaddr_in sa;
 	memset(&sa, 0, sizeof(struct sockaddr_in));
 	sa.sin_family = AF_INET;
 
 	int sockfd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
+	*index = if_nametoindex(interface);
 
 	setsockopt(sockfd, SOL_SOCKET, SO_BINDTODEVICE, interface, strlen(interface));
 
@@ -33,11 +34,14 @@ int receive_packet(int sockfd, unsigned char* buffer)
 
 //--------------------------------------------------------------------------------------------------------------------------
 
-int send_packet(int sockfd, const unsigned char* buffer, int packet_size)
+int send_packet(int sockfd, const unsigned char* buffer, int packet_size, int index)
 {
 	struct sockaddr_ll sa;
-	memset(&sa, 0, sizeof(struct sockaddr_ll));
+	memset(&sa, 0, sizeof(sa));
+	sa.sll_family = AF_PACKET;
 	sa.sll_protocol = htons(ETH_P_ALL);
+	sa.sll_ifindex = index;
+	sa.sll_halen = ETH_ALEN;
 
 	int send_size = sendto(sockfd, buffer, packet_size, 0, (struct sockaddr*)&sa, sizeof(struct sockaddr_ll));
 
@@ -53,8 +57,8 @@ void print_packet_info(const unsigned char* buffer)
 	if (ntohs(eth_header->h_proto) == ETH_P_ARP)
 	{
 		struct ether_arp* arp_header = (struct ether_arp*)(buffer + sizeof(struct ethhdr));
-		printf("src_IP=%s;  ",  inet_ntoa(*(struct in_addr*)&arp_header->arp_spa));
-		printf("dst_IP=%s;  ",  inet_ntoa(*(struct in_addr*)&arp_header->arp_tpa));
+		printf("src_ip=%s;  ",  inet_ntoa(*(struct in_addr*)&arp_header->arp_spa));
+		printf("dst_ip=%s;  ",  inet_ntoa(*(struct in_addr*)&arp_header->arp_tpa));
 		printf("protocol=ARP;\n\n");
 		return;
 	}
@@ -68,7 +72,8 @@ void print_packet_info(const unsigned char* buffer)
 	struct ip* ip_header = (struct ip*)(buffer + sizeof(struct ethhdr));
 	int ip_header_len = ip_header->ip_hl * 4;
 
-	printf("src_ip=%s;  dst_ip=%s;  ", inet_ntoa(ip_header->ip_src), inet_ntoa(ip_header->ip_dst));
+	printf("src_ip=%s;  ", inet_ntoa(ip_header->ip_src));
+	printf("dst_ip=%s;  ", inet_ntoa(ip_header->ip_dst));
 
 	if      (ip_header->ip_p == IPPROTO_TCP)
 	{

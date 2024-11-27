@@ -48,15 +48,17 @@ int main(int argc, char* argv[])
 	}
 
 
-	int sockfd1 = create_raw_socket(interface1);
-	int sockfd2 = create_raw_socket(interface2);
+	int index1 = 0;
+	int index2 = 0;
+	int sockfd1 = create_raw_socket(interface1, &index1);
+	int sockfd2 = create_raw_socket(interface2, &index2);
 
 	FilterRule rules[MAX_RULES_COUNT];
 	int rules_count = load_rules(rules_filename, rules);
 	if (rules_count <= 0)
 	{
 		printf("ERROR: Unable to load rules.\n\n");
-		return -2;
+		return -3;
 	}
 
 
@@ -64,11 +66,12 @@ int main(int argc, char* argv[])
 	signal(SIGINT, handler);
 	while (!stop)
 	{
+		memset(buffer, 0, BUF_SIZE);
 		int packet_size = receive_packet(sockfd1, buffer);
 
 		if (!apply_rules(buffer, rules, rules_count))
 		{
-			send_packet(sockfd2, buffer, packet_size);
+			send_packet(sockfd2, buffer, packet_size, index2);
 
 			if (mode == SHOW_ALLOWED_PACKETS_INFO)
 			{
