@@ -61,6 +61,30 @@ int main(int argc, char* argv[])
 		return -3;
 	}
 
+	pid_t pid = fork();
+	switch (pid)
+	{
+		case -1:
+		{
+			printf("ERROR: fork failed.\n\n");
+			return -1;
+		} break;
+
+		case 0:
+		{
+			int tmp_sock = sockfd1;
+			sockfd1 = sockfd2;
+			sockfd2 = tmp_sock;
+
+			int tmp_index = index1;
+			index1 = index2;
+			index2 = tmp_index;
+		} break;
+
+		default:
+		{}
+			break;
+	}
 
 	unsigned char buffer[BUF_SIZE];
 	signal(SIGINT, handler);

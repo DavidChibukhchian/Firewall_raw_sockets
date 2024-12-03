@@ -18,6 +18,8 @@
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 #include <linux/if_packet.h>
+#include <linux/if.h>
+#include <sys/ioctl.h>
 
 //--------------------------------------------------------------------------------------------------------------------------
 

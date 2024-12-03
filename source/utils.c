@@ -15,6 +15,12 @@ int create_raw_socket(const char* interface, int* index)
 	int sockfd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
 	*index = if_nametoindex(interface);
 
+	struct ifreq ifr = {};
+    memccpy(ifr.ifr_name, interface, 0, sizeof(ifr.ifr_name));
+	ioctl(sockfd, SIOCGIFADDR,  &ifr);
+	ioctl(sockfd, SIOCGIFMTU,   &ifr);
+	ioctl(sockfd, SIOCGIFINDEX, &ifr);
+
 	struct sockaddr_ll s_ll = {
 		.sll_family     = AF_PACKET,
 		.sll_protocol   = htons(ETH_P_ALL),
