@@ -15,7 +15,15 @@ int create_raw_socket(const char* interface, int* index)
 	int sockfd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
 	*index = if_nametoindex(interface);
 
-	setsockopt(sockfd, SOL_SOCKET, SO_BINDTODEVICE, interface, strlen(interface));
+	struct sockaddr_ll s_ll = {
+		.sll_family     = AF_PACKET,
+		.sll_protocol   = htons(ETH_P_ALL),
+		.sll_ifindex    = *index,
+	};
+
+	bind(sockfd, (struct sockaddr*)&s_ll, sizeof(struct sockaddr_ll));
+
+	//setsockopt(sockfd, SOL_SOCKET, SO_BINDTODEVICE, interface, strlen(interface));
 
 	return sockfd;
 }
